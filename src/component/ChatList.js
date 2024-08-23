@@ -1,18 +1,89 @@
-import React from 'react';
-import { FaCircle, FaSearch } from 'react-icons/fa';
+import React from "react";
+import { FaCircle, FaSearch } from "react-icons/fa";
 
 function ChatList() {
   const chats = [
-    { name: "Patrick Hendricks", message: "hey! there I’m available", time: "02:50 PM", img: "https://picsum.photos/50/50?random=1", online: true },
-    { name: "Mark Messer", message: "Images", time: "10:30 AM", img: "https://picsum.photos/50/50?random=2", unread: 2, online: false },
-    { name: "General", message: "This theme is Awesome!", time: "2:06 min", img: "https://picsum.photos/50/50?random=3", online: false },
-    { name: "Doris Brown", message: "typing...", time: "10:05 PM", img: "https://picsum.photos/50/50?random=4", online: true },
-    { name: "Designer", message: "Next meeting tomorrow 10:00 AM", time: "2:10 min", img: "https://picsum.photos/50/50?random=5", unread: 1, online: false },
+    {
+      name: "Patrick Hendricks",
+      message: "hey! there I’m available",
+      time: "02:50 PM",
+      img: "https://picsum.photos/50/50?random=1",
+      online: true,
+    },
+    {
+      name: "Mark Messer",
+      message: "Images",
+      time: "10:30 AM",
+      img: "https://picsum.photos/50/50?random=2",
+      unread: 2,
+      online: false,
+    },
+    {
+      name: "General",
+      message: "This theme is Awesome!",
+      time: "2:06 min",
+      img: "https://picsum.photos/50/50?random=3",
+      online: false,
+    },
+    {
+      name: "Doris Brown",
+      message: "typing...",
+      time: "10:05 PM",
+      img: "https://picsum.photos/50/50?random=4",
+      online: true,
+    },
+    {
+      name: "Designer",
+      message: "Next meeting tomorrow 10:00 AM",
+      time: "2:10 min",
+      img: "https://picsum.photos/50/50?random=5",
+      unread: 1,
+      online: false,
+    },
+    {
+      name: "Patrick Hendricks",
+      message: "hey! there I’m available",
+      time: "02:50 PM",
+      img: "https://picsum.photos/50/50?random=1",
+      online: true,
+    },
+    {
+      name: "Mark Messer",
+      message: "Images",
+      time: "10:30 AM",
+      img: "https://picsum.photos/50/50?random=2",
+      unread: 2,
+      online: false,
+    },
+    {
+      name: "General",
+      message: "This theme is Awesome!",
+      time: "2:06 min",
+      img: "https://picsum.photos/50/50?random=3",
+      online: false,
+    },
+    {
+      name: "Doris Brown",
+      message: "typing...",
+      time: "10:05 PM",
+      img: "https://picsum.photos/50/50?random=4",
+      online: true,
+    },
+    {
+      name: "Designer",
+      message: "Next meeting tomorrow 10:00 AM",
+      time: "2:10 min",
+      img: "https://picsum.photos/50/50?random=5",
+      unread: 1,
+      online: false,
+    },
   ];
 
   return (
     <div className="bg-violet-50 w-[400px] border-r p-6">
-        <h2 className='text-gray-600 font-semibold font-sans text-xl mb-6'>Chats</h2>
+      <h2 className="text-gray-600 font-semibold font-sans text-xl mb-6">
+        Chats
+      </h2>
       {/* Search Bar */}
       <div className="mb-4">
         <div className="relative">
@@ -28,13 +99,24 @@ function ChatList() {
       {/* User Profiles */}
       <div className="px-4 flex overflow-x-auto space-x-4">
         {chats.slice(0, 4).map((chat, index) => (
-          <div key={index} className="relative flex-shrink-0 w-16 h-16 text-center">
-            <img src={chat.img} alt={chat.name} className="w-10 h-10 object-cover rounded-full" />
+          <div
+            key={index}
+            className="relative flex-shrink-0 w-16 h-16 text-center"
+          >
+            <img
+              src={chat.img}
+              alt={chat.name}
+              className="w-10 h-10 object-cover rounded-full"
+            />
             <div className="relative bottom-0 left-10 w-1 h-1 rounded-full bg-white">
-              <FaCircle className={`text-${chat.online ? 'green' : 'gray'}-500`} />
+              <FaCircle
+                className={`text-${chat.online ? "green" : "gray"}-500`}
+              />
             </div>
             <div>
-            <p className="text-xs mt-2 text-gray-700">{chat.name.split(" ")[0]}</p>
+              <p className="text-xs mt-2 text-gray-700">
+                {chat.name.split(" ")[0]}
+              </p>
             </div>
           </div>
         ))}
@@ -45,14 +127,20 @@ function ChatList() {
         <h3 className="text-gray-500 text-sm mb-2">Recent</h3>
 
         {/* Recent Chats List */}
-        <ul>
+        <ul className="flex flex-col gap-4 h-[100px] overflow-y-scroll">
           {chats.map((chat, index) => (
             <li key={index} className="flex justify-between items-center py-2">
               <div className="flex items-center">
                 <div className="relative w-10 h-10 rounded-full overflow-hidden mr-3">
-                  <img src={chat.img} alt={chat.name} className="w-full h-full object-cover" />
+                  <img
+                    src={chat.img}
+                    alt={chat.name}
+                    className="w-full h-full object-cover"
+                  />
                   <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-white">
-                    <FaCircle className={`text-${chat.online ? 'green' : 'gray'}-500`} />
+                    <FaCircle
+                      className={`text-${chat.online ? "green" : "gray"}-500`}
+                    />
                   </div>
                 </div>
                 <div>
