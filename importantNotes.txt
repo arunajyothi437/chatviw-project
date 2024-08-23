@@ -1,0 +1,5 @@
+MONGODB CLUSTER
+username: krish74m
+password: krish@413
+
+mongodb+srv://<krish74m>:<krish@413>@cluster0.0utup.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
