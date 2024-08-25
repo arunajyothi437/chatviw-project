@@ -45,13 +45,14 @@ function ChatList() {
   useEffect(() => {
     if (socket) {
       socket.on('receiveMessage', (newMessage) => {
-        setChats(prevChats => 
-          prevChats.map(chat => 
-            chat._id === newMessage.chatId 
-              ? { ...chat, messages: [...chat.messages, newMessage] }
-              : chat
-          )
-        );
+        console.log("---------------new message",newMessage)
+        // setChats(prevChats => 
+        //   prevChats.map(chat => 
+        //     chat._id === newMessage.chatId 
+        //       ? { ...chat, messages: [...chat.messages, newMessage] }
+        //       : chat
+        //   )
+        // );
       });
     }
   }, [socket]);
