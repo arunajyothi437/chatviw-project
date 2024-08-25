@@ -15,15 +15,20 @@ const ChatWindow = ({ selectedUser, socket }) => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/chats`, {
+        const userDetails = JSON.parse(sessionStorage.getItem("user"));
+        const sender = userDetails._id;
+        const receiver = selectedUser._id;
+        const response = await axios.get(`http://localhost:5000/api/chats/messages?sender=${sender}&receiver=${receiver}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
-        const userChat = response.data.find(chat => 
-          chat.participants.some(participant => participant._id === selectedUser._id)
-        );
-        setMessages(userChat ? userChat.messages : []);
+        if (response.data.status && response.data.data) {
+          setMessages(response.data.data.messages);
+        } else {
+          setMessages([]);
+        }
       } catch (error) {
         console.error('Error fetching messages:', error);
+        setMessages([]);
       }
     };
 
@@ -127,37 +132,40 @@ const ChatWindow = ({ selectedUser, socket }) => {
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {messages.map((msg, index) => (
-        <div key={index} className={`flex items-end ${msg.type === 'incoming' ? '' : 'justify-end'}`}>
-          {msg.type === 'incoming' && (
-            <img
-              src={selectedUser.img || "https://picsum.photos/50"}
-              alt={selectedUser.username}
-              className="rounded-full w-10 h-10"
-            />
-          )}
-          <div className={`ml-2 ${msg.type === 'incoming' ? '' : 'mr-2'}`}>
-            <div className={`${msg.type === 'incoming' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-800'} p-3 rounded-lg ${msg.type === 'incoming' ? 'rounded-bl-none' : 'rounded-br-none'}`}>
-              {msg.content}
-            </div>
-            <span className="text-xs text-gray-500 flex items-center justify-end">
-              {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              {msg.type === 'outgoing' && <BsCheckAll className="ml-1 text-blue-500" />}
-            </span>
+{/* Messages */}
+<div className="flex-1 overflow-y-auto p-4 space-y-4">
+  {messages.map((msg, index) => {
+    const isOutgoing = msg.type === 'outgoing';
+    return (
+      <div key={index} className={`flex items-end ${isOutgoing ? 'justify-end' : ''}`}>
+        {!isOutgoing && (
+          <img
+            src={selectedUser.img || "https://picsum.photos/50"}
+            alt={selectedUser.username}
+            className="rounded-full w-10 h-10"
+          />
+        )}
+        <div className={`${isOutgoing ? 'mr-2' : 'ml-2'}`}>
+          <div className={`${isOutgoing ? 'bg-gray-200 text-gray-800' : 'bg-purple-600 text-white'} p-3 rounded-lg ${isOutgoing ? 'rounded-br-none' : 'rounded-bl-none'}`}>
+            {msg.content}
           </div>
-          {msg.type === 'outgoing' && (
-            <img
-              src="https://picsum.photos/50"
-              alt="You"
-              className="rounded-full w-10 h-10"
-            />
-          )}
+          <span className="text-xs text-gray-500 flex items-center justify-end">
+            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {isOutgoing && <BsCheckAll className="ml-1 text-blue-500" />}
+          </span>
         </div>
-      ))}
-      <div ref={messagesEndRef} />
-    </div>
+        {isOutgoing && (
+          <img
+            src="https://picsum.photos/50"
+            alt="You"
+            className="rounded-full w-10 h-10"
+          />
+        )}
+      </div>
+    );
+  })}
+  <div ref={messagesEndRef} />
+</div>
 
       {/* Input */}
       <div className="sticky bottom-0 bg-white flex items-center p-3 border-t border-gray-300">
