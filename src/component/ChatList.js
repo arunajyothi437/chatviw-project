@@ -1,43 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { FaCircle, FaImage, FaSearch } from 'react-icons/fa';
+import { FaCircle, FaImage, FaSearch, FaPhone, FaVideo, FaEllipsisV } from 'react-icons/fa';
 import axios from 'axios';
 import io from 'socket.io-client';
 import ChatWindow from './ChatWindow';
 
 function ChatList() {
   const [users, setUsers] = useState([]);
-  const [chats, setChats] = useState([]);
+  const [latestMessages, setLatestMessages] = useState({});
   const [selectedUser, setSelectedUser] = useState(null);
   const [socket, setSocket] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const newSocket = io('http://localhost:5000');
     setSocket(newSocket);
 
-    const fetchUsers = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/users', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        setUsers(response.data);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      }
-    };
-
-    const fetchChats = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/chats', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        setChats(response.data);
-      } catch (error) {
-        console.error('Error fetching chats:', error);
-      }
-    };
-
     fetchUsers();
-    fetchChats();
+    fetchLatestMessages();
 
     return () => newSocket.close();
   }, []);
@@ -45,17 +24,44 @@ function ChatList() {
   useEffect(() => {
     if (socket) {
       socket.on('receiveMessage', (newMessage) => {
-        console.log("---------------new message",newMessage)
-        // setChats(prevChats => 
-        //   prevChats.map(chat => 
-        //     chat._id === newMessage.chatId 
-        //       ? { ...chat, messages: [...chat.messages, newMessage] }
-        //       : chat
-        //   )
-        // );
+        setLatestMessages(prev => ({
+          ...prev,
+          [newMessage.senderId]: newMessage
+        }));
       });
     }
+    return () => {
+      if (socket) {
+        socket.off('receiveMessage');
+      }
+    };
   }, [socket]);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/users', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchLatestMessages = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/chats/latest-messages', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const messageMap = {};
+      response.data.forEach(message => {
+        messageMap[message.userId] = message;
+      });
+      setLatestMessages(messageMap);
+    } catch (error) {
+      console.error('Error fetching latest messages:', error);
+    }
+  };
 
   const handleUserClick = async (userId) => {
     const selectedUser = users.find(user => user._id === userId);
@@ -65,30 +71,21 @@ function ChatList() {
     }
   };
 
-  const handleMessageUpdate = (userId, newMessage, deletedMessageId) => {
-    setChats(prevChats => 
-      prevChats.map(chat => {
-        if (chat.users.some(user => user._id === userId)) {
-          if (deletedMessageId) {
-            return {
-              ...chat,
-              messages: chat.messages.filter(msg => msg._id !== deletedMessageId)
-            };
-          } else if (newMessage) {
-            return {
-              ...chat,
-              messages: [...chat.messages, newMessage]
-            };
-          }
-        }
-        return chat;
-      })
-    );
+  const handleMessageUpdate = (userId, newMessage) => {
+    setLatestMessages(prev => ({
+      ...prev,
+      [userId]: newMessage
+    }));
   };
 
+  const filteredUsers = users.filter(user =>
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (latestMessages[user._id]?.content.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   return (
-    <div className="flex">
-      <div className="bg-[#f5f7fb] w-[400px] h-screen border-r p-4 pb-10">
+    <div className="flex h-screen">
+      <div className="bg-[#f5f7fb] w-[400px] border-r p-4 pb-10 flex flex-col">
         <h2 className="text-xl font-semibold mb-4">Chats</h2>
 
         {/* Search Bar */}
@@ -99,11 +96,13 @@ function ChatList() {
               type="text"
               placeholder="Search messages or users"
               className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#e6ebf5] text-gray-600"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
 
-        {/* User Profiles */}
+        {/* User avatars */}
         <div className="flex justify-around space-x-4 mb-6 px-4">
           {users.slice(0, 4).map((user) => (
             <div
@@ -119,7 +118,7 @@ function ChatList() {
                 <div className="relative inline-block">
                   <img
                     src={user.img || 'https://via.placeholder.com/50'}
-                    alt={user.username || user.email}
+                    alt={user.username}
                     className="w-10 h-10 rounded-full border-2 border-white shadow-md"
                   />
                   <div className="absolute bottom-1 right-1 w-3 h-3 rounded-full bg-white flex items-center justify-center border border-white">
@@ -129,60 +128,55 @@ function ChatList() {
                   </div>
                 </div>
                 <p className="text-sm font-medium text-gray-700 -mt-2 pb-2">
-                  {user.username || user.email.split('@')[0]}
+                  {user.username.split(' ')[0]}
                 </p>
               </div>
             </div>
           ))}
         </div>
 
-        <div
-          style={{ maxHeight: "calc(100vh - 220px)" }}
-          className="flex flex-col gap-2 scrollable"
-        >
-          <h3 className="text-gray-500 text-sm font-medium mb-2">Recent</h3>
-          <ul className="overflow-y-auto pb-5">
-            {chats.map((chat) => {
-              const otherUser = chat.users.find(user => user._id !== JSON.parse(sessionStorage.getItem("user"))._id);
-              const lastMessage = chat.messages[chat.messages.length - 1];
+        {/* User list */}
+        <div className="flex-1 overflow-y-auto">
+          <h3 className="text-gray-500 text-sm font-medium mb-2">All Users</h3>
+          <ul>
+            {filteredUsers.map((user) => {
+              const lastMessage = latestMessages[user._id];
               return (
                 <li
-                  key={chat._id}
+                  key={user._id}
                   className="flex items-center py-4 hover:bg-gray-200 rounded-lg px-2 pr-4 cursor-pointer"
-                  onClick={() => handleUserClick(otherUser._id)}
+                  onClick={() => handleUserClick(user._id)}
                 >
                   <div className="relative mr-3">
                     <img
-                      src={otherUser.img || 'https://via.placeholder.com/50'}
-                      alt={otherUser.username || 'User'}
+                      src={user.img || 'https://via.placeholder.com/50'}
+                      alt={user.username}
                       className="w-10 h-10 rounded-full"
                     />
                     <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-white flex items-center justify-center">
                       <FaCircle
-                        className={`text-${otherUser.isOnline ? "green" : "gray"}-500 text-xs`}
+                        className={`text-${user.isOnline ? "green" : "gray"}-500 text-xs`}
                       />
                     </div>
                   </div>
                   <div className="flex-grow">
-                    <h4 className="text-gray-800 font-medium">{otherUser.username || otherUser.email.split('@')[0]}</h4>
-                    <p className="text-gray-500 text-sm flex items-center">
-                      {lastMessage && lastMessage.type === 'image' && (
-                        <FaImage className="mr-1" />
-                      )}
+                    <h4 className="text-gray-800 font-medium">{user.username}</h4>
+                    <p className="text-gray-500 text-sm">
                       {lastMessage ? (
-                        lastMessage.type === 'text' ? lastMessage.content : 'Sent an image'
+                        lastMessage.type === 'image' ? (
+                          <><FaImage className="inline mr-1" /> Image</>
+                        ) : (
+                          lastMessage.content
+                        )
                       ) : "No messages yet"}
                     </p>
                   </div>
                   <div className="text-right">
                     <div className="text-gray-500 text-xs">
-                      {lastMessage && new Date(lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {lastMessage && lastMessage.createdAt && 
+                        new Date(lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      }
                     </div>
-                    {chat.unreadCount > 0 && (
-                      <span className="inline-block mt-1 text-xs bg-purple-500 text-white px-2 py-0.5 rounded-full">
-                        {chat.unreadCount}
-                      </span>
-                    )}
                   </div>
                 </li>
               );
@@ -192,7 +186,7 @@ function ChatList() {
       </div>
 
       {/* Chat Window */}
-      <div className="flex-1 w-full">
+      <div className="flex-1">
         {selectedUser ? (
           <ChatWindow 
             selectedUser={selectedUser}
@@ -200,7 +194,9 @@ function ChatList() {
             onMessageUpdate={handleMessageUpdate}
           />
         ) : (
-          <div className="p-6 text-gray-500">Select a user to start chatting.</div>
+          <div className="h-full flex items-center justify-center text-gray-500">
+            Select a user to start chatting
+          </div>
         )}
       </div>
     </div>

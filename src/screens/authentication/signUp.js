@@ -24,9 +24,10 @@ const SignUp = () => {
 
       // Store the token in local storage
       localStorage.setItem("token", response.data.token);
+      sessionStorage.setItem("user", JSON.stringify(response.data.user));
 
       // Navigate to the home page
-      navigate("/home");
+      navigate("/users");
     } catch (error) {
       setError(error.response?.data?.message || "An error occurred. Please try again.");
     }

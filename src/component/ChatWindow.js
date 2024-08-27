@@ -1,4 +1,3 @@
-// ChatWindow.js
 import React, { useState, useEffect, useRef } from 'react';
 import { FaPaperclip, FaSmile, FaImage, FaPaperPlane } from 'react-icons/fa';
 import { FaSearch, FaPhone, FaVideo, FaEllipsisV } from 'react-icons/fa';
@@ -11,6 +10,7 @@ const ChatWindow = ({ selectedUser, socket }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [messages, setMessages] = useState([]);
   const messagesEndRef = useRef(null);
+  const loggedInUserId = JSON.parse(sessionStorage.getItem("user"))._id;
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -64,21 +64,27 @@ const ChatWindow = ({ selectedUser, socket }) => {
 
   const handleSend = async () => {
     if (message.trim()) {
+      const newMessage = {
+        sender: loggedInUserId,
+        receiver: selectedUser._id,
+        content: message,
+        type: 'outgoing'
+      };
+      // Immediately add the message to state
+      setMessages(prevMessages => [...prevMessages, newMessage]);
+      setMessage('');
+
       try {
-        const userDetails = JSON.parse(sessionStorage.getItem("user"));
-        const data = {
-          sender: userDetails._id,
+        const response = await axios.post('http://localhost:5000/api/chats/message', {
+          sender: loggedInUserId,
           receiver: selectedUser._id,
-          messages: { content: message, type: "outgoing" }
-        };
-        const response = await axios.post('http://localhost:5000/api/chats/message', data, {
+          messages: { content: newMessage.content, type: 'outgoing' }
+        }, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
-        const newMessage = response.data.message;
-        setMessages(prevMessages => [...prevMessages, newMessage]);
-        setMessage('');
+        const serverMessage = response.data.message;
         if (socket) {
-          socket.emit('sendMessage', newMessage);
+          socket.emit('sendMessage', serverMessage);
         }
       } catch (error) {
         console.error('Error sending message:', error);
@@ -133,39 +139,39 @@ const ChatWindow = ({ selectedUser, socket }) => {
       </div>
 
       {/* Messages */}
-<div className="flex-1 overflow-y-auto p-4 space-y-4">
-  {messages.map((msg, index) => {
-    const isOutgoing = msg.type === 'outgoing';
-    return (
-      <div key={index} className={`flex items-end ${isOutgoing ? 'justify-end' : ''}`}>
-        {!isOutgoing && (
-          <img
-            src={selectedUser.img || "https://picsum.photos/50"}
-            alt={selectedUser.username}
-            className="rounded-full w-10 h-10"
-          />
-        )}
-        <div className={`${isOutgoing ? 'mr-2' : 'ml-2'}`}>
-          <div className={`${isOutgoing ? 'bg-gray-200 text-gray-800' : 'bg-purple-600 text-white'} p-3 rounded-lg ${isOutgoing ? 'rounded-br-none' : 'rounded-bl-none'}`}>
-            {msg.content}
-          </div>
-          <span className="text-xs text-gray-500 flex items-center justify-end">
-            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            {isOutgoing && <BsCheckAll className="ml-1 text-blue-500" />}
-          </span>
-        </div>
-        {isOutgoing && (
-          <img
-            src="https://picsum.photos/50"
-            alt="You"
-            className="rounded-full w-10 h-10"
-          />
-        )}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((msg, index) => {
+          const isOutgoing = msg.sender === loggedInUserId;
+          return (
+            <div key={index} className={`flex items-end ${isOutgoing ? 'justify-end' : 'justify-start'}`}>
+              {!isOutgoing && (
+                <img
+                  src={selectedUser.img || "https://picsum.photos/50"}
+                  alt={selectedUser.username}
+                  className="rounded-full w-10 h-10"
+                />
+              )}
+              <div className={`${isOutgoing ? 'mr-2' : 'ml-2'}`}>
+                <div className={`${isOutgoing ? 'bg-gray-200 text-gray-800' : 'bg-purple-600 text-white'} p-3 rounded-lg ${isOutgoing ? 'rounded-br-none' : 'rounded-bl-none'}`}>
+                  {msg.content}
+                </div>
+                <span className="text-xs text-gray-500 flex items-center justify-end">
+                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {isOutgoing && <BsCheckAll className="ml-1 text-blue-500" />}
+                </span>
+              </div>
+              {isOutgoing && (
+                <img
+                  src="https://picsum.photos/50"
+                  alt="You"
+                  className="rounded-full w-10 h-10"
+                />
+              )}
+            </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
       </div>
-    );
-  })}
-  <div ref={messagesEndRef} />
-</div>
 
       {/* Input */}
       <div className="sticky bottom-0 bg-white flex items-center p-3 border-t border-gray-300">

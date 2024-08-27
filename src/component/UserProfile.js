@@ -1,19 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaUser, FaPaperclip, FaChevronDown, FaChevronUp, FaEllipsisV } from 'react-icons/fa';
 
 function UserProfile() {
-  const user = {
+  const [user, setUser] = useState({
     name: "Patricia Smith",
     email: "adc@123.com",
     time: "11:40 AM",
     location: "California, USA",
     img: "https://picsum.photos/150/150",
     status: "Active",
-  };
+  });
 
-  // State to handle toggling of sections
   const [showAbout, setShowAbout] = useState(false);
   const [showFiles, setShowFiles] = useState(false);
+
+  useEffect(() => {
+    // Fetch logged-in user details from sessionStorage
+    const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
+    if (loggedInUser) {
+      setUser(prevUser => ({
+        ...prevUser,
+        name: loggedInUser.username || loggedInUser.name || prevUser.name,
+        email: loggedInUser.email || prevUser.email
+      }));
+    }
+  }, []);
 
   return (
     <div className="bg-gray-100 w-[400px] p-6">
