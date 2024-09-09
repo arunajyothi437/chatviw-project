@@ -27,7 +27,7 @@ const SignUp = () => {
       sessionStorage.setItem("user", JSON.stringify(response.data.user));
 
       // Navigate to the home page
-      navigate("/users");
+      navigate("/");
     } catch (error) {
       setError(error.response?.data?.message || "An error occurred. Please try again.");
     }

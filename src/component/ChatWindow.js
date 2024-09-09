@@ -4,8 +4,13 @@ import { FaSearch, FaPhone, FaVideo, FaEllipsisV } from 'react-icons/fa';
 import { BsCheckAll } from 'react-icons/bs';
 import EmojiPicker from 'emoji-picker-react';
 import axios from 'axios';
+import
+{ Modal }
+from
+"antd"
+;
 
-const ChatWindow = ({ selectedUser, socket }) => {
+const ChatWindow = ({ selectedUser, socket, onMessageUpdate }) => {
   const [message, setMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -41,6 +46,7 @@ const ChatWindow = ({ selectedUser, socket }) => {
     if (socket) {
       socket.on('receiveMessage', (newMessage) => {
         setMessages(prevMessages => [...prevMessages, newMessage]);
+        onMessageUpdate(newMessage.sender, newMessage);
       });
     }
     return () => {
@@ -48,7 +54,7 @@ const ChatWindow = ({ selectedUser, socket }) => {
         socket.off('receiveMessage');
       }
     };
-  }, [socket]);
+  }, [socket, onMessageUpdate]);
 
   useEffect(() => {
     scrollToBottom();
@@ -68,7 +74,8 @@ const ChatWindow = ({ selectedUser, socket }) => {
         sender: loggedInUserId,
         receiver: selectedUser._id,
         content: message,
-        type: 'outgoing'
+        type: 'outgoing',
+        createdAt: new Date().toISOString()
       };
       // Immediately add the message to state
       setMessages(prevMessages => [...prevMessages, newMessage]);
@@ -86,6 +93,8 @@ const ChatWindow = ({ selectedUser, socket }) => {
         if (socket) {
           socket.emit('sendMessage', serverMessage);
         }
+        // Update the latest message in the ChatList
+        onMessageUpdate(selectedUser._id, serverMessage);
       } catch (error) {
         console.error('Error sending message:', error);
       }
@@ -116,9 +125,9 @@ const ChatWindow = ({ selectedUser, socket }) => {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-4xl mx-auto">
+    <div className="flex flex-col h-screen max-w-4xl mx-auto bg-white dark:bg-gray-900">
       {/* Header */}
-      <div className="sticky top-0 bg-white shadow flex items-center justify-between p-4">
+      <div className="sticky top-0 shadow flex items-center justify-between p-4 bg-white dark:bg-gray-800">
         <div className="flex items-center">
           <img
             src={selectedUser.img || "https://picsum.photos/50"}
@@ -126,20 +135,20 @@ const ChatWindow = ({ selectedUser, socket }) => {
             className="rounded-full w-10 h-10"
           />
           <div className="ml-3">
-            <h2 className="text-lg font-semibold">{selectedUser.username}</h2>
+            <h2 className="text-lg font-semibold dark:text-white">{selectedUser.username}</h2>
             <span className="text-sm text-green-500">Online</span>
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <FaSearch className="text-gray-600 cursor-pointer" />
-          <FaPhone className="text-gray-600 cursor-pointer" />
-          <FaVideo className="text-gray-600 cursor-pointer" />
-          <FaEllipsisV className="text-gray-600 cursor-pointer" />
+          <FaSearch className="text-gray-600 dark:text-gray-400 cursor-pointer" />
+          <FaPhone className="text-gray-600 dark:text-gray-400 cursor-pointer" />
+          <FaVideo className="text-gray-600 dark:text-gray-400 cursor-pointer" />
+          <FaEllipsisV className="text-gray-600 dark:text-gray-400 cursor-pointer" />
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-100 dark:bg-gray-800">
         {messages.map((msg, index) => {
           const isOutgoing = msg.sender === loggedInUserId;
           return (
@@ -152,10 +161,14 @@ const ChatWindow = ({ selectedUser, socket }) => {
                 />
               )}
               <div className={`${isOutgoing ? 'mr-2' : 'ml-2'}`}>
-                <div className={`${isOutgoing ? 'bg-gray-200 text-gray-800' : 'bg-purple-600 text-white'} p-3 rounded-lg ${isOutgoing ? 'rounded-br-none' : 'rounded-bl-none'}`}>
+                <div className={`${
+                  isOutgoing 
+                    ? 'bg-blue-500 text-white dark:bg-blue-600' 
+                    : 'bg-white text-gray-800 dark:bg-gray-700 dark:text-white'
+                } p-3 rounded-lg ${isOutgoing ? 'rounded-br-none' : 'rounded-bl-none'}`}>
                   {msg.content}
                 </div>
-                <span className="text-xs text-gray-500 flex items-center justify-end">
+                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-end">
                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   {isOutgoing && <BsCheckAll className="ml-1 text-blue-500" />}
                 </span>
@@ -174,10 +187,10 @@ const ChatWindow = ({ selectedUser, socket }) => {
       </div>
 
       {/* Input */}
-      <div className="sticky bottom-0 bg-white flex items-center p-3 border-t border-gray-300">
+      <div className="sticky bottom-0 flex items-center p-3 border-t border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="relative">
           <FaSmile
-            className="text-gray-600 cursor-pointer"
+            className="text-gray-600 dark:text-gray-400 cursor-pointer"
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           />
           {showEmojiPicker && (
@@ -194,7 +207,7 @@ const ChatWindow = ({ selectedUser, socket }) => {
           onChange={handleFileUpload}
         />
         <label htmlFor="file-upload">
-          <FaPaperclip className="text-gray-600 cursor-pointer ml-4" />
+          <FaPaperclip className="text-gray-600 dark:text-gray-400 cursor-pointer ml-4" />
         </label>
 
         <input
@@ -205,7 +218,7 @@ const ChatWindow = ({ selectedUser, socket }) => {
           onChange={handleFileUpload}
         />
         <label htmlFor="image-upload">
-          <FaImage className="text-gray-600 cursor-pointer ml-4" />
+          <FaImage className="text-gray-600 dark:text-gray-400 cursor-pointer ml-4" />
         </label>
 
         <input
@@ -213,7 +226,7 @@ const ChatWindow = ({ selectedUser, socket }) => {
           placeholder="Enter Message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 px-4 py-2 mx-4 bg-gray-200 rounded-full focus:outline-none"
+          className="flex-1 px-4 py-2 mx-4 bg-gray-200 dark:bg-gray-700 dark:text-white rounded-full focus:outline-none"
           onKeyPress={(e) => {
             if (e.key === 'Enter') {
               handleSend();
@@ -222,7 +235,7 @@ const ChatWindow = ({ selectedUser, socket }) => {
         />
 
         <FaPaperPlane
-          className="text-gray-600 cursor-pointer"
+          className="text-gray-600 dark:text-gray-400 cursor-pointer"
           onClick={handleSend}
         />
       </div>

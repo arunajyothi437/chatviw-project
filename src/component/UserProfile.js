@@ -27,7 +27,7 @@ function UserProfile() {
   }, []);
 
   return (
-    <div className="bg-gray-100 w-[400px] p-6">
+    <div className="bg-white-100 w-[400px] p-6">
       {/* My Profile and Options */}
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-semibold text-gray-800">My Profile</h1>

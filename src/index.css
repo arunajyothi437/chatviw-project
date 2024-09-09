@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-white;
+}
+
 /* Custom Scrollbar for WebKit browsers */
 ::-webkit-scrollbar {
   width: 5px; /* Width of the scrollbar */
@@ -18,4 +22,36 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555; /* Scrollbar handle color on hover */
+}
+:root {
+  --bg-color: #ffffff;
+  --text-color: #333333;
+  --sidebar-bg: #f0f0f0;
+  --icon-color: #666666;
+  --active-icon-color: #007bff;
+}
+
+[data-theme="dark"] {
+  --bg-color: #333333;
+  --text-color: #ffffff;
+  --sidebar-bg: #222222;
+  --icon-color: #bbbbbb;
+  --active-icon-color: #4da6ff;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.sidebar {
+  background-color: var(--sidebar-bg);
+}
+
+.icon {
+  color: var(--icon-color);
+}
+
+.icon-button.active .icon {
+  color: var(--active-icon-color);
 }

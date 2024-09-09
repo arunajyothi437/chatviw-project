@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "./component/Sidebar";
 import ChatWindow from "./component/ChatWindow";
 import MessageInput from "./component/MessageInput";
@@ -9,6 +9,10 @@ import ContactsList from "./component/ContactsList";
 
 function App() {
   const [activeScreen, setActiveScreen] = useState(0);
+  useEffect(() => {
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    document.documentElement.classList.toggle('dark', isDarkMode);
+  }, []);
 
   const renderActiveScreen = () => {
     switch (activeScreen) {
@@ -22,6 +26,8 @@ function App() {
         return <GroupsList />;
       case 4:
         return <ContactsList />;
+        case 5:
+          return <UserProfile />;
       default:
         return <ChatList />;
     }
